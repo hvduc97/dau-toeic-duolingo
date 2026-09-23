@@ -60,15 +60,15 @@ export default function LoginPage() {
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 mb-2 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center text-white shadow-duo-cyan group-hover:scale-105 transition-transform text-2xl font-black">
-              🌱
+            <div className="h-16 w-16 rounded-3xl bg-white dark:bg-slate-800 p-2 flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-md group-hover:scale-105 transition-transform mx-auto">
+              <img src="/images/logo.png" alt="LET'S English" className="h-full w-full object-contain" />
             </div>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Chào Mừng Trở Lại!
+            Đăng Nhập LET&apos;S English
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Đăng nhập để tiếp tục duy trì streak và điểm thi TOEIC của bạn
+          <p className="text-xs sm:text-sm text-brand-600 dark:text-brand-400 font-bold">
+            Chất lượng là ưu tiên hàng đầu
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export default function LoginPage() {
 
         {/* Footer Link to Register */}
         <div className="text-center text-xs text-slate-500 dark:text-slate-400">
-          Chưa có tài khoản Đậu TOEIC?{" "}
+          Chưa có tài khoản LET&apos;S English?{" "}
           <Link
             href="/register"
             className="font-bold text-brand-600 dark:text-brand-400 hover:underline"

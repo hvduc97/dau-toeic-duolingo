@@ -63,15 +63,15 @@ export default function RegisterPage() {
         {/* Header Branding */}
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 mb-2 group">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center text-white shadow-duo-cyan group-hover:scale-105 transition-transform text-2xl font-black">
-              🌱
+            <div className="h-16 w-16 rounded-3xl bg-white dark:bg-slate-800 p-2 flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-md group-hover:scale-105 transition-transform mx-auto">
+              <img src="/images/logo.png" alt="LET'S English" className="h-full w-full object-contain" />
             </div>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Tạo Tài Khoản Mới
+            Gia Nhập LET&apos;S English
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Bắt đầu hành trình đỗ TOEIC với lộ trình gamification thông minh
+          <p className="text-xs sm:text-sm text-brand-600 dark:text-brand-400 font-bold">
+            Chất lượng là ưu tiên hàng đầu
           </p>
         </div>
 

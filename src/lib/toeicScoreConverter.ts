@@ -67,7 +67,7 @@ export function calculateToeicScores(listeningCorrect: number, readingCorrect: n
     badge = "🚀 Đang bứt phá";
   } else if (totalScore >= 450) {
     levelEvaluation = "Trung bình (Giao tiếp cơ bản)";
-    badge = "🌿 Đậu TOEIC";
+    badge = "🌿 LET'S English";
   }
 
   return {

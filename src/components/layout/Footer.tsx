@@ -6,12 +6,13 @@ export default function Footer() {
   return (
     <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 py-8 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-brand-600 flex items-center justify-center text-white text-xs font-bold">
-            🌱
-          </div>
-          <span className="font-bold text-slate-700 dark:text-slate-300">Đậu TOEIC</span>
-          <span>— Nền tảng luyện thi TOEIC 4 kỹ năng lấy cảm hứng từ dauenglish.com</span>
+        <div className="flex items-center gap-2.5">
+          <img src="/images/logo.png" alt="LET'S English" className="w-6 h-6 object-contain" />
+          <span className="font-extrabold text-slate-800 dark:text-slate-200">
+            <span className="text-brand-600">LET&apos;S</span>{" "}
+            <span className="text-earth-600">English</span>
+          </span>
+          <span className="hidden sm:inline">— Chất lượng là ưu tiên hàng đầu</span>
         </div>
 
         <div className="flex items-center gap-6">

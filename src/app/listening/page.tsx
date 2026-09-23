@@ -23,7 +23,7 @@ export default function ListeningListPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 text-xs font-black mb-2">
             <Headphones className="w-4 h-4" />
-            Đặc Sản Đậu TOEIC
+            Đặc Sắc LET&apos;S English
           </div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             Luyện Nghe 4 Chế Độ Đột Phá

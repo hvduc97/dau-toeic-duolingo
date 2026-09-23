@@ -5,10 +5,11 @@ import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
-  title: "Đậu TOEIC — Luyện thi TOEIC 4 kỹ năng chuẩn ETS & Gamification Duolingo",
-  description: "Luyện thi TOEIC online miễn phí với đề thi thử ETS 990, luyện nghe 4 chế độ độc quyền, từ vựng Flashcard SRS và hơn 5.000 câu ngữ pháp giải thích chi tiết.",
+  title: "LET'S English — Chất Lượng Là Ưu Tiên Hàng Đầu | Luyện Thi TOEIC 4 Kỹ Năng",
+  description: "LET'S English — Nền tảng học và luyện thi TOEIC 4 kỹ năng với phương châm chất lượng là ưu tiên hàng đầu. Đề thi thử ETS 990, luyện nghe 4 chế độ, từ vựng Flashcard SRS và hơn 5.000 câu ngữ pháp giải thích chi tiết.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>",
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
   },
 };
 

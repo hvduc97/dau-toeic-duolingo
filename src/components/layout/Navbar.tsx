@@ -111,21 +111,26 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
         <div className="flex items-center space-x-3">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-brand-600 to-emerald-500 flex items-center justify-center text-white shadow-duo-cyan group-hover:scale-105 transition-transform">
-              <span className="text-xl font-black">🌱</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="h-11 w-11 rounded-2xl bg-white dark:bg-slate-800 p-1 flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm group-hover:scale-105 transition-transform">
+              <img
+                src="/images/logo.png"
+                alt="LET'S English Logo"
+                className="h-full w-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand-600 to-emerald-600 dark:from-brand-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                  ĐẬU TOEIC
+                <span className="font-black text-xl tracking-tight text-slate-900 dark:text-white">
+                  <span className="text-brand-600 dark:text-brand-400">LET&apos;S</span>{" "}
+                  <span className="text-earth-600 dark:text-earth-400">English</span>
                 </span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-                  DUO
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                  PRO
                 </span>
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5 hidden sm:block">
-                Luyện thi 4 kỹ năng vui như chơi game
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5 hidden sm:block font-medium">
+                Chất lượng là ưu tiên hàng đầu
               </p>
             </div>
           </Link>

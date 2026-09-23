@@ -50,19 +50,19 @@ export default function HomePage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-10">
       {/* Hero Banner with Duolingo Mascot style */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-teal-600 to-emerald-600 text-white p-6 sm:p-10 shadow-xl shadow-brand-500/10">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-700 via-emerald-600 to-teal-700 text-white p-6 sm:p-10 shadow-xl shadow-brand-600/10">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-white/10 blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-4 max-w-2xl text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-black tracking-wide uppercase">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-black tracking-wide uppercase">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              Luyện thi TOEIC chuẩn format ETS 2024–2026
+              Chất lượng là ưu tiên hàng đầu
             </div>
             <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
-              ĐẬU TOEIC CÙNG <br />
-              <span className="text-amber-300 drop-shadow-sm">BÉ ĐẬU DUOLINGO</span>
+              HỌC CÙNG <br />
+              <span className="text-amber-300 drop-shadow-sm">LET&apos;S ENGLISH</span>
             </h1>
-            <p className="text-teal-50 text-sm sm:text-base leading-relaxed">
+            <p className="text-emerald-50 text-sm sm:text-base leading-relaxed">
               Trang bị trọn gói 4 kỹ năng với phương pháp luyện nghe 4 chế độ đột phá, phòng thi thử 120 phút chấm điểm ETS 990 và thẻ từ vựng Spaced Repetition thông minh.
             </p>
 
@@ -90,11 +90,11 @@ export default function HomePage() {
           {/* Gamification Progress Widget */}
           <div className="w-full md:w-80 bg-white/95 dark:bg-slate-900/95 text-slate-800 dark:text-slate-100 p-5 rounded-2xl shadow-xl border border-white/20 backdrop-blur-md space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="text-3xl animate-bounce">🌱</span>
+              <div className="flex items-center gap-2.5">
+                <img src="/images/logo.png" alt="LET'S English" className="w-10 h-10 object-contain" />
                 <div>
-                  <h3 className="font-extrabold text-sm">Bé Đậu Cổ Vũ</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Mục tiêu hằng ngày</p>
+                  <h3 className="font-extrabold text-sm">LET&apos;S English</h3>
+                  <p className="text-[11px] text-brand-600 dark:text-brand-400 font-bold">Chất lượng hàng đầu</p>
                 </div>
               </div>
               <div className="flex items-center gap-1 text-amber-500 font-black text-sm">
@@ -143,7 +143,7 @@ export default function HomePage() {
               <span className="text-brand-600 dark:text-brand-400">4 Trụ Cột</span> Luyện Thi Cốt Lõi
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
-              Phương pháp học tập khoa học của Đậu TOEIC kết hợp phản hồi tức thì
+              Phương pháp học tập khoa học của LET&apos;S English — Cam kết chất lượng là ưu tiên hàng đầu
             </p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function HomePage() {
               </div>
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                  Đặc sản Đậu TOEIC
+                  Đặc sắc LET&apos;S English
                 </span>
                 <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mt-1 group-hover:text-sky-600 transition-colors">
                   Luyện Nghe 4 Chế Độ

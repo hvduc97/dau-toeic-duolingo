@@ -1,6 +1,6 @@
-# ĐẬU TOEIC — Nền Tảng Luyện Thi TOEIC 4 Kỹ Năng (Duolingo Style) 🌱
+# LET'S English — Chất Lượng Là Ưu Tiên Hàng Đầu 🌱
 
-Nền tảng học và luyện thi TOEIC trực tuyến toàn diện, kết hợp mô hình đào tạo thực chiến của **Đậu TOEIC (dauenglish.com)** với trải nghiệm gamification trẻ trung, âm thanh tương tác sống động lấy cảm hứng từ **Duolingo**.
+Nền tảng học và luyện thi TOEIC trực tuyến toàn diện với phương châm **"Chất lượng là ưu tiên hàng đầu"**, kết hợp mô hình đào tạo chuẩn ETS với trải nghiệm gamification trẻ trung, âm thanh tương tác sống động lấy cảm hứng từ **Duolingo**.
 
 ---
 

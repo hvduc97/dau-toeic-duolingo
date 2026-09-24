@@ -16,6 +16,9 @@ import {
   Zap,
   GraduationCap
 } from "lucide-react";
+import { GoogleButton } from "@/components/auth/GoogleButton";
+import { GoogleOnboardingModal } from "@/components/auth/GoogleOnboardingModal";
+import { User } from "@/types/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,6 +29,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [onboardingUser, setOnboardingUser] = useState<User | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +56,15 @@ export default function LoginPage() {
       router.push("/profile");
     } else {
       setError(res.error || "Không thể đăng nhập tài khoản mẫu");
+    }
+  };
+
+  const handleGoogleSuccess = (user: User, isNewUser: boolean) => {
+    if (isNewUser) {
+      setOnboardingUser(user);
+      setShowOnboarding(true);
+    } else {
+      router.push("/profile");
     }
   };
 
@@ -80,6 +94,20 @@ export default function LoginPage() {
               <span>{error}</span>
             </div>
           )}
+
+          {/* Đăng nhập với Google */}
+          <GoogleButton
+            mode="login"
+            onSuccess={handleGoogleSuccess}
+          />
+
+          {/* Divider Phân Cách */}
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+            <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Hoặc dùng Email & Mật khẩu
+            </span>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Field */}
@@ -145,12 +173,12 @@ export default function LoginPage() {
           <div className="relative flex items-center justify-center">
             <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
             <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-bold text-slate-400 uppercase">
-              Hoặc trải nghiệm nhanh
+              Tài khoản mẫu
             </span>
           </div>
 
-          {/* Quick Demo Logins */}
-          <div className="space-y-2.5">
+          {/* Quick Demo Login */}
+          <div>
             <button
               type="button"
               onClick={handleQuickDemoLogin}
@@ -159,16 +187,6 @@ export default function LoginPage() {
             >
               <Zap className="w-4 h-4 fill-slate-900" />
               <span>Vào nhanh bằng Tài Khoản Mẫu (1-Click)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleQuickDemoLogin}
-              disabled={loading}
-              className="w-full py-2.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2 transition-colors"
-            >
-              <span className="text-base">🌐</span>
-              <span>Đăng nhập qua Google (Demo)</span>
             </button>
           </div>
         </div>
@@ -183,6 +201,13 @@ export default function LoginPage() {
             Đăng ký ngay miễn phí
           </Link>
         </div>
+
+        {/* Modal Onboarding cho Google New User */}
+        <GoogleOnboardingModal
+          isOpen={showOnboarding}
+          user={onboardingUser}
+          onClose={() => setShowOnboarding(false)}
+        />
       </div>
     </div>
   );

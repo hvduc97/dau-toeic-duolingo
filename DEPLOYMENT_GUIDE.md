@@ -72,7 +72,28 @@ Từ nay về sau, bất cứ khi nào bạn muốn cập nhật đề thi mới
 
 ---
 
+## 🔑 Cấu Hình Đăng Nhập / Đăng Ký Bằng Google (Tùy Chọn)
+
+Website đã tích hợp sẵn tính năng Đăng nhập / Đăng ký Google kèm **chế độ Demo 1-click** (chạy ngay mà không cần cấu hình gì). Nếu bạn muốn kết nối với tài khoản Google thật 100%:
+
+1. Truy cập: **[Google Cloud Console](https://console.cloud.google.com/)** -> Tạo một Project mới.
+2. Vào mục **APIs & Services** -> **OAuth consent screen**:
+   - Chọn **External** -> Điền App name: `LET'S English` và email liên hệ.
+3. Vào mục **Credentials** -> Bấm **Create Credentials** -> Chọn **OAuth Client ID**:
+   - Application type: **Web application**.
+   - Name: `LET'S English Web`.
+   - **Authorized redirect URIs**:
+     - Cho máy local: `http://localhost:3000/api/auth/callback/google`
+     - Cho trang web Vercel: `https://<ten-mien-vercel-cua-ban>.vercel.app/api/auth/callback/google`
+4. Copy **Client ID** và **Client Secret**.
+5. Mở dự án trên Vercel: Vào tab **Settings** -> **Environment Variables** -> Thêm 2 biến:
+   - `GOOGLE_CLIENT_ID`: *(dán Client ID vào đây)*
+   - `GOOGLE_CLIENT_SECRET`: *(dán Client Secret vào đây)*
+6. Bấm Save. Vercel sẽ tự động áp dụng và cho phép mọi học viên đăng nhập bằng tài khoản Google thật!
+
+---
+
 ## 🌐 Gắn Tên Miền Riêng (Custom Domain — Tùy Chọn)
-Nếu sau này bạn mua tên miền riêng (ví dụ `dautoeic.vn` hoặc `dautoeic.com`):
+Nếu sau này bạn mua tên miền riêng (ví dụ `letsenglish.vn` hoặc `letsenglish.com`):
 1. Vào dự án trên Vercel -> Chọn tab **Settings** -> **Domains**.
 2. Nhập tên miền của bạn và làm theo hướng dẫn trỏ bản ghi DNS (CNAME / A record) của Vercel.

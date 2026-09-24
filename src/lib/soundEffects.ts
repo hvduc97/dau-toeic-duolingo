@@ -99,6 +99,30 @@ class SoundManager {
     osc.stop(now + 0.3);
   }
 
+  // Âm thanh Click tương tác giao diện
+  public playClick() {
+    if (!this.soundEnabled) return;
+    const ctx = this.getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(700, now);
+    osc.frequency.exponentialRampToValueAtTime(350, now + 0.06);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.06);
+  }
+
+  // Âm thanh chiến thắng / chào mừng học viên mới
+  public playVictory() {
+    this.playFanfare();
+  }
+
   // Nhạc ăn mừng hoàn thành xuất sắc bài thi
   public playFanfare() {
     if (!this.soundEnabled) return;
@@ -166,3 +190,4 @@ class SoundManager {
 }
 
 export const soundManager = new SoundManager();
+export const soundEffects = soundManager;

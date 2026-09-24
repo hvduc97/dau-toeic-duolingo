@@ -127,3 +127,53 @@ export function verifySessionToken(token: string): { userId: string; email: stri
     return null;
   }
 }
+
+export interface GoogleProfileInput {
+  email: string;
+  name: string;
+  picture?: string;
+  targetScore?: TargetScore;
+}
+
+export function upsertGoogleUser(profile: GoogleProfileInput): { user: User; isNewUser: boolean } {
+  const users = getAllUsers();
+  const existingIndex = users.findIndex(
+    (u) => u.email.toLowerCase() === profile.email.toLowerCase().trim()
+  );
+
+  if (existingIndex >= 0) {
+    const existing = users[existingIndex];
+    existing.provider = existing.provider || "google";
+    if (profile.picture && !existing.avatarUrl) {
+      existing.avatarUrl = profile.picture;
+    }
+    saveUsers(users);
+    return {
+      user: sanitizeUser(existing),
+      isNewUser: false,
+    };
+  }
+
+  // Tạo tài khoản mới từ thông tin Google
+  const newUser: StoredUser = {
+    id: "user-google-" + Date.now(),
+    name: profile.name?.trim() || profile.email.split("@")[0],
+    email: profile.email.trim().toLowerCase(),
+    passwordHash: "",
+    avatar: "seed",
+    avatarUrl: profile.picture,
+    targetScore: profile.targetScore || "650+",
+    createdAt: new Date().toISOString(),
+    streak: 1,
+    xp: 25,
+    provider: "google",
+  };
+
+  users.push(newUser);
+  saveUsers(users);
+
+  return {
+    user: sanitizeUser(newUser),
+    isNewUser: true,
+  };
+}

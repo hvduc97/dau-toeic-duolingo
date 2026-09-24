@@ -17,6 +17,9 @@ import {
   ShieldCheck,
   Target
 } from "lucide-react";
+import { GoogleButton } from "@/components/auth/GoogleButton";
+import { GoogleOnboardingModal } from "@/components/auth/GoogleOnboardingModal";
+import { User } from "@/types/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -29,6 +32,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [onboardingUser, setOnboardingUser] = useState<User | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +52,15 @@ export default function RegisterPage() {
       router.push("/profile");
     } else {
       setError(res.error || "Đăng ký thất bại");
+    }
+  };
+
+  const handleGoogleSuccess = (user: User, isNewUser: boolean) => {
+    if (isNewUser) {
+      setOnboardingUser(user);
+      setShowOnboarding(true);
+    } else {
+      router.push("/profile");
     }
   };
 
@@ -83,6 +97,20 @@ export default function RegisterPage() {
               <span>{error}</span>
             </div>
           )}
+
+          {/* Nút Đăng ký nhanh với Google */}
+          <GoogleButton
+            mode="register"
+            onSuccess={handleGoogleSuccess}
+          />
+
+          {/* Divider Phân Cách */}
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-slate-200 dark:border-slate-800 w-full" />
+            <span className="bg-white dark:bg-slate-900 px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Hoặc đăng ký bằng Email
+            </span>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Field */}
@@ -206,6 +234,13 @@ export default function RegisterPage() {
             Đăng nhập ngay
           </Link>
         </div>
+
+        {/* Modal Onboarding cho Google New User */}
+        <GoogleOnboardingModal
+          isOpen={showOnboarding}
+          user={onboardingUser}
+          onClose={() => setShowOnboarding(false)}
+        />
       </div>
     </div>
   );

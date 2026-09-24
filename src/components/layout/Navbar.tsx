@@ -198,7 +198,11 @@ export default function Navbar() {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-2xl bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900 border border-brand-200 dark:border-brand-800 transition-all text-left"
               >
-                <span className="text-xl">{avatarMap[user.avatar || "seed"] || "🌱"}</span>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-slate-700" />
+                ) : (
+                  <span className="text-xl">{avatarMap[user.avatar || "seed"] || "🌱"}</span>
+                )}
                 <div className="hidden sm:block">
                   <div className="text-xs font-black text-slate-900 dark:text-white leading-tight">
                     {user.name.split(" ")[0]}

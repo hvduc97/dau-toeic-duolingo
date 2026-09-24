@@ -12,6 +12,8 @@ interface AuthContextType {
   register: (payload: RegisterPayload) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (payload: UpdateProfilePayload) => Promise<{ success: boolean; error?: string }>;
+  refreshUser: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,27 +22,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const refreshUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setUser(data.user);
+          if (data.user.streak) localStorage.setItem("dau_streak_days", String(data.user.streak));
+          if (data.user.xp) localStorage.setItem("dau_xp", String(data.user.xp));
+        }
+      }
+    } catch (err) {
+      console.warn("Lỗi tải thông tin phiên đăng nhập:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch current user on mount
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) {
-            setUser(data.user);
-            // Đồng bộ streak & XP vào localStorage
-            if (data.user.streak) localStorage.setItem("dau_streak_days", String(data.user.streak));
-            if (data.user.xp) localStorage.setItem("dau_xp", String(data.user.xp));
-          }
-        }
-      } catch (err) {
-        console.warn("Lỗi tải thông tin phiên đăng nhập:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadUser();
+    refreshUser();
   }, []);
 
   const login = async (payload: LoginPayload) => {
@@ -146,6 +148,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         updateProfile,
+        refreshUser,
+        setUser,
       }}
     >
       {children}

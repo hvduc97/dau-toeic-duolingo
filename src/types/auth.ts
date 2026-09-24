@@ -7,10 +7,13 @@ export interface User {
   name: string;
   email: string;
   avatar: AvatarIcon;
+  avatarUrl?: string;
   targetScore: TargetScore;
   createdAt: string;
   streak: number;
   xp: number;
+  provider?: "local" | "google";
+  isNewUser?: boolean;
 }
 
 export interface AuthState {

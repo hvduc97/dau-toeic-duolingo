@@ -3,8 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const url = new URL(req.url);
-  const origin = `${url.protocol}//${url.host}`;
-  const redirectUri = `${origin}/api/auth/callback/google`;
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || url.host;
+  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const redirectUri = `${proto}://${host}/api/auth/callback/google`;
   const returnTo = url.searchParams.get("returnTo") || "/profile";
 
   if (!clientId) {

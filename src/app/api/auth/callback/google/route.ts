@@ -22,8 +22,9 @@ export async function GET(req: NextRequest) {
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const origin = `${url.protocol}//${url.host}`;
-  const redirectUri = `${origin}/api/auth/callback/google`;
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || url.host;
+  const proto = req.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  const redirectUri = `${proto}://${host}/api/auth/callback/google`;
 
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(new URL("/login?error=google_config_missing", req.url));

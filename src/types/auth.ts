@@ -14,6 +14,7 @@ export interface User {
   xp: number;
   provider?: "local" | "google";
   isNewUser?: boolean;
+  role?: "admin" | "student";
 }
 
 export interface AuthState {

@@ -20,7 +20,8 @@ import {
   Sparkles,
   User as UserIcon,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  ShieldCheck
 } from "lucide-react";
 import { soundManager } from "@/lib/soundEffects";
 import { useAuth } from "@/context/AuthContext";
@@ -240,6 +241,15 @@ export default function Navbar() {
                   >
                     <Settings className="w-4 h-4 text-slate-400" />
                     <span>Cài đặt & AI</span>
+                  </Link>
+
+                  <Link
+                    href="/admin/mock-tests"
+                    onClick={() => setUserDropdownOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-amber-500" />
+                    <span>Quản trị đề thi</span>
                   </Link>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 my-1" />

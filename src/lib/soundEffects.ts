@@ -99,6 +99,11 @@ class SoundManager {
     osc.stop(now + 0.3);
   }
 
+  // Alias cho playIncorrect
+  public playWrong() {
+    this.playIncorrect();
+  }
+
   // Âm thanh Click tương tác giao diện
   public playClick() {
     if (!this.soundEnabled) return;

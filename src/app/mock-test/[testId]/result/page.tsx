@@ -4,7 +4,7 @@ import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import confetti from "canvas-confetti";
 import { sampleToeicTests } from "@/data/toeicTests";
-import { ToeicQuestion } from "@/types/toeic";
+import { ToeicQuestion, ToeicTest } from "@/types/toeic";
 import { askGeminiExplanation, AiExplanationResponse } from "@/lib/gemini";
 import { soundManager } from "@/lib/soundEffects";
 import {
@@ -24,7 +24,9 @@ import {
 
 export default function TestResultPage({ params }: { params: Promise<{ testId: string }> }) {
   const resolvedParams = use(params);
-  const test = sampleToeicTests.find((t) => t.id === resolvedParams.testId) || sampleToeicTests[0];
+  const [test, setTest] = useState<ToeicTest>(() => {
+    return sampleToeicTests.find((t) => t.id === resolvedParams.testId) || sampleToeicTests[0];
+  });
 
   const [resultData, setResultData] = useState<{
     listeningScore: number;
@@ -52,8 +54,27 @@ export default function TestResultPage({ params }: { params: Promise<{ testId: s
       });
     } catch (_) {}
 
+    // Load custom test if needed
+    const defaultFound = sampleToeicTests.find((t) => t.id === resolvedParams.testId);
+    if (!defaultFound) {
+      try {
+        const localCustom = JSON.parse(localStorage.getItem("dau_custom_tests") || "[]") as ToeicTest[];
+        const localTest = localCustom.find((item) => item.id === resolvedParams.testId);
+        if (localTest) {
+          setTest(localTest);
+        } else {
+          fetch(`/api/admin/tests/${resolvedParams.testId}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.test) setTest(d.test);
+            })
+            .catch(() => {});
+        }
+      } catch {}
+    }
+
     // Load result from localStorage
-    const saved = localStorage.getItem(`dau_test_result_${test.id}`);
+    const saved = localStorage.getItem(`dau_test_result_${resolvedParams.testId}`);
     if (saved) {
       try {
         setResultData(JSON.parse(saved));

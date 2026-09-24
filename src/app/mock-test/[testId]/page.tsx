@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { sampleToeicTests } from "@/data/toeicTests";
-import { ToeicQuestion, ToeicPart } from "@/types/toeic";
+import { ToeicQuestion, ToeicPart, ToeicTest } from "@/types/toeic";
 import { calculateToeicScores } from "@/lib/toeicScoreConverter";
 import { soundManager } from "@/lib/soundEffects";
 import {
@@ -24,7 +24,9 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
   const resolvedParams = use(params);
   const router = useRouter();
 
-  const test = sampleToeicTests.find((t) => t.id === resolvedParams.testId) || sampleToeicTests[0];
+  const [test, setTest] = useState<ToeicTest>(() => {
+    return sampleToeicTests.find((t) => t.id === resolvedParams.testId) || sampleToeicTests[0];
+  });
 
   // State
   const [selectedPart, setSelectedPart] = useState<ToeicPart>(1);
@@ -36,8 +38,40 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
 
-  const questionsInCurrentPart = test.questions.filter((q) => q.part === selectedPart);
-  const currentQuestion = questionsInCurrentPart[currentQuestionIndex] || test.questions[0];
+  // Load custom tests from API / localStorage if not standard test
+  useEffect(() => {
+    const loadTest = async () => {
+      const defaultFound = sampleToeicTests.find((t) => t.id === resolvedParams.testId);
+      if (defaultFound) {
+        setTest(defaultFound);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/admin/tests/${resolvedParams.testId}`);
+        const data = await res.json();
+        if (res.ok && data.test) {
+          setTest(data.test);
+          setTimeLeft((data.test.durationMinutes || 120) * 60);
+          return;
+        }
+      } catch {}
+
+      try {
+        const localCustom = JSON.parse(localStorage.getItem("dau_custom_tests") || "[]") as ToeicTest[];
+        const localTest = localCustom.find((item) => item.id === resolvedParams.testId);
+        if (localTest) {
+          setTest(localTest);
+          setTimeLeft((localTest.durationMinutes || 120) * 60);
+        }
+      } catch {}
+    };
+
+    loadTest();
+  }, [resolvedParams.testId]);
+
+  const questionsInCurrentPart = test.questions?.filter((q) => q.part === selectedPart) || [];
+  const currentQuestion = questionsInCurrentPart[currentQuestionIndex] || test.questions?.[0] || sampleToeicTests[0].questions[0];
 
   // Timer countdown
   useEffect(() => {

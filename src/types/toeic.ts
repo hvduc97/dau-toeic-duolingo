@@ -31,6 +31,9 @@ export interface ToeicTest {
   totalQuestions: number;
   durationMinutes: number;
   questions: ToeicQuestion[];
+  isCustom?: boolean;
+  createdAt?: string;
+  authorName?: string;
 }
 
 export interface UserAnswerRecord {

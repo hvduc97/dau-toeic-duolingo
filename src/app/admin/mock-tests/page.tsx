@@ -19,6 +19,7 @@ import {
   Sparkles,
   ArrowLeft,
   RefreshCw,
+  Zap,
 } from "lucide-react";
 import { ToeicTest } from "@/types/toeic";
 import { soundManager } from "@/lib/soundEffects";
@@ -262,6 +263,14 @@ export default function AdminMockTestsPage() {
             <FileDown className="w-4 h-4 text-emerald-600" />
             <span>Export Tất Cả</span>
           </button>
+
+          <Link
+            href="/admin/mock-tests/crawl"
+            className="btn-duo px-3.5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-white font-black text-xs shadow-duo-yellow flex items-center gap-1.5"
+          >
+            <Zap className="w-4 h-4 fill-white" />
+            <span>⚡ Cào Đề Tự Động</span>
+          </Link>
 
           <Link
             href="/admin/mock-tests/create"

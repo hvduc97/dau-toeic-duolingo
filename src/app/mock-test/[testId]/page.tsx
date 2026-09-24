@@ -37,6 +37,7 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
   const [isTimerPaused, setIsTimerPaused] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [palettePartFilter, setPalettePartFilter] = useState<string>("all");
 
   // Load custom tests from API / localStorage if not standard test
   useEffect(() => {
@@ -128,6 +129,27 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
   const handlePartChange = (part: ToeicPart) => {
     setSelectedPart(part);
     setCurrentQuestionIndex(0);
+  };
+
+  const goToNextQuestion = () => {
+    if (currentQuestionIndex < questionsInCurrentPart.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else if (selectedPart < 7) {
+      const nextPart = (selectedPart + 1) as ToeicPart;
+      setSelectedPart(nextPart);
+      setCurrentQuestionIndex(0);
+    }
+  };
+
+  const goToPrevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    } else if (selectedPart > 1) {
+      const prevPart = (selectedPart - 1) as ToeicPart;
+      setSelectedPart(prevPart);
+      const prevQuestions = test.questions?.filter((q) => q.part === prevPart) || [];
+      setCurrentQuestionIndex(Math.max(0, prevQuestions.length - 1));
+    }
   };
 
   const answeredCount = Object.keys(userAnswers).length;
@@ -355,21 +377,21 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
             {/* Previous / Next Question Navigation */}
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <button
-                onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
-                disabled={currentQuestionIndex === 0}
+                onClick={goToPrevQuestion}
+                disabled={currentQuestionIndex === 0 && selectedPart === 1}
                 className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Câu trước</span>
               </button>
 
-              <span className="text-xs text-slate-400 font-bold">
-                {currentQuestionIndex + 1} / {questionsInCurrentPart.length}
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">
+                Câu {currentQuestion?.questionNumber || 1} / 200 (Part {selectedPart}: {currentQuestionIndex + 1}/{questionsInCurrentPart.length})
               </span>
 
               <button
-                onClick={() => setCurrentQuestionIndex((prev) => Math.min(questionsInCurrentPart.length - 1, prev + 1))}
-                disabled={currentQuestionIndex === questionsInCurrentPart.length - 1}
+                onClick={goToNextQuestion}
+                disabled={currentQuestionIndex === questionsInCurrentPart.length - 1 && selectedPart === 7}
                 className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed shadow-duo-cyan"
               >
                 <span>Câu tiếp theo</span>
@@ -383,11 +405,41 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
         <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4 h-fit">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
-              Bảng Lưới Câu Hỏi
+              Bảng Lưới 200 Câu Hỏi
             </h3>
             <span className="text-xs font-bold text-brand-600 dark:text-brand-400">
               Đã làm: {answeredCount}/{test.questions.length}
             </span>
+          </div>
+
+          {/* Part Filter Bar for Palette */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              onClick={() => setPalettePartFilter("all")}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
+                palettePartFilter === "all"
+                  ? "bg-brand-600 text-white"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+              }`}
+            >
+              Tất cả (200)
+            </button>
+            {[1, 2, 3, 4, 5, 6, 7].map((p) => {
+              const partCount = test.questions.filter((item) => item.part === p).length;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setPalettePartFilter(String(p))}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${
+                    palettePartFilter === String(p)
+                      ? "bg-brand-600 text-white"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+                  }`}
+                >
+                  P{p} ({partCount})
+                </button>
+              );
+            })}
           </div>
 
           {/* Legend */}
@@ -406,38 +458,43 @@ export default function ExamRoomPage({ params }: { params: Promise<{ testId: str
             </div>
           </div>
 
-          {/* Questions Grid for current part */}
+          {/* Questions Grid */}
           <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 max-h-96 overflow-y-auto pr-1">
-            {test.questions.map((q) => {
-              const isAnswered = Boolean(userAnswers[q.id]);
-              const isFlagged = Boolean(flaggedQuestions[q.id]);
-              const isCurrent = q.id === currentQuestion.id;
+            {test.questions
+              .filter((q) => {
+                if (palettePartFilter === "all") return true;
+                return q.part === Number(palettePartFilter);
+              })
+              .map((q) => {
+                const isAnswered = Boolean(userAnswers[q.id]);
+                const isFlagged = Boolean(flaggedQuestions[q.id]);
+                const isCurrent = q.id === currentQuestion.id;
 
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => {
-                    setSelectedPart(q.part);
-                    const idx = test.questions.filter((item) => item.part === q.part).findIndex((item) => item.id === q.id);
-                    setCurrentQuestionIndex(Math.max(0, idx));
-                  }}
-                  className={`h-9 rounded-xl font-bold text-xs transition-all relative flex items-center justify-center border ${
-                    isCurrent
-                      ? "ring-2 ring-brand-500 border-brand-500"
-                      : "border-slate-200 dark:border-slate-700"
-                  } ${
-                    isAnswered
-                      ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
-                  }`}
-                >
-                  <span>{q.questionNumber}</span>
-                  {isFlagged && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white dark:border-slate-900" />
-                  )}
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={q.id}
+                    onClick={() => {
+                      setSelectedPart(q.part);
+                      const idx = test.questions.filter((item) => item.part === q.part).findIndex((item) => item.id === q.id);
+                      setCurrentQuestionIndex(Math.max(0, idx));
+                    }}
+                    className={`h-9 rounded-xl font-bold text-xs transition-all relative flex items-center justify-center border ${
+                      isCurrent
+                        ? "ring-2 ring-brand-500 border-brand-500"
+                        : "border-slate-200 dark:border-slate-700"
+                    } ${
+                      isAnswered
+                        ? "bg-emerald-500 text-white border-emerald-600 shadow-sm"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                    }`}
+                  >
+                    <span>{q.questionNumber}</span>
+                    {isFlagged && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white dark:border-slate-900" />
+                    )}
+                  </button>
+                );
+              })}
           </div>
         </div>
       </div>

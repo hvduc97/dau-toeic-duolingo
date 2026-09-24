@@ -82,9 +82,12 @@ Website đã tích hợp sẵn tính năng Đăng nhập / Đăng ký Google kè
 3. Vào mục **Credentials** -> Bấm **Create Credentials** -> Chọn **OAuth Client ID**:
    - Application type: **Web application**.
    - Name: `LET'S English Web`.
-   - **Authorized redirect URIs**:
+   - **Authorized JavaScript origins** *(Nguồn gốc JavaScript — KHÔNG chứa đuôi /api/...)*:
+     - Cho máy local: `http://localhost:3000`
+     - Cho Vercel: `https://<ten-mien-vercel-cua-ban>.vercel.app`
+   - **Authorized redirect URIs** *(URI chuyển hướng — nằm ở mục bên dưới)*:
      - Cho máy local: `http://localhost:3000/api/auth/callback/google`
-     - Cho trang web Vercel: `https://<ten-mien-vercel-cua-ban>.vercel.app/api/auth/callback/google`
+     - Cho Vercel: `https://<ten-mien-vercel-cua-ban>.vercel.app/api/auth/callback/google`
 4. Copy **Client ID** và **Client Secret**.
 5. Mở dự án trên Vercel: Vào tab **Settings** -> **Environment Variables** -> Thêm 2 biến:
    - `GOOGLE_CLIENT_ID`: *(dán Client ID vào đây)*

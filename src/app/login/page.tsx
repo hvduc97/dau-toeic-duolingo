@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -31,6 +31,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [onboardingUser, setOnboardingUser] = useState<User | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err === "google_config_missing") {
+        setError(
+          "Chưa tìm thấy biến GOOGLE_CLIENT_ID trên Vercel. Sau khi thêm biến trong Settings -> Environment Variables, bạn cần bấm 'Redeploy' để Vercel nạp biến mới."
+        );
+      } else if (err === "google_token_failed" || err === "google_userinfo_failed") {
+        setError("Không thể xác thực với Google. Vui lòng kiểm tra lại Client Secret.");
+      } else if (err) {
+        setError(`Lỗi đăng nhập Google: ${err}`);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -37,7 +37,7 @@ export default function EditMockTestPage({ params }: { params: Promise<{ testId:
   // Test General Info
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [series, setSeries] = useState<"Pass TOEIC" | "Crack TOEIC Vol 1" | "Crack TOEIC Vol 2" | "ETS Series" | "Khác">("ETS Series");
+  const [series, setSeries] = useState<string>("ETS Series");
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [difficulty, setDifficulty] = useState<"Dễ" | "Trung bình" | "Khó">("Trung bình");
   const [durationMinutes, setDurationMinutes] = useState<number>(120);

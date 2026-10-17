@@ -269,9 +269,9 @@ export default function MockTestListPage() {
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/mock-test/${test.id}?mode=test`}
+                    href={`/mock-test/${test.id}/play?mode=full`}
                     onClick={() => soundManager.playCorrect()}
-                    className="btn-duo flex-1 py-2.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-xs shadow-duo-cyan text-center flex items-center justify-center gap-1.5"
+                    className="btn-duo flex-1 py-2.5 rounded-2xl bg-[#0891b2] hover:bg-cyan-600 text-white font-black text-xs shadow-duo-cyan text-center flex items-center justify-center gap-1.5 transition-all"
                   >
                     <Play className="w-3.5 h-3.5 fill-white" />
                     <span>Thi Thử (120&apos;)</span>

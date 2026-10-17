@@ -61,7 +61,7 @@ export default function PracticeModal({ isOpen, onClose, test }: PracticeModalPr
     soundManager.playCorrect();
     const partsParam = selectedParts.join(",");
     const explainParam = instantExplain ? "1" : "0";
-    router.push(`/mock-test/${test.id}?mode=practice&parts=${partsParam}&explain=${explainParam}`);
+    router.push(`/mock-test/${test.id}/play?mode=practice&parts=${partsParam}&explain=${explainParam}`);
   };
 
   return (

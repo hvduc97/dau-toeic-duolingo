@@ -151,9 +151,9 @@ export default function MockTestIntroPage({ params }: { params: Promise<{ testId
         {/* Big CTAs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
           <Link
-            href={`/mock-test/${test.id}?mode=test`}
+            href={`/mock-test/${test.id}/play?mode=full`}
             onClick={() => soundManager.playCorrect()}
-            className="btn-duo py-4 px-6 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-black text-base shadow-duo-cyan text-center flex items-center justify-center gap-2"
+            className="btn-duo py-4 px-6 rounded-2xl bg-[#0891b2] hover:bg-cyan-600 text-white font-black text-base shadow-duo-cyan text-center flex items-center justify-center gap-2 transition-all"
           >
             <Play className="w-5 h-5 fill-white" />
             <span>Thi Thử Như Thật (120&apos;)</span>

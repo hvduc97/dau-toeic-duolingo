@@ -192,6 +192,12 @@ class SoundManager {
       window.speechSynthesis.speak(utterance);
     });
   }
+
+  public stopSpeaking() {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

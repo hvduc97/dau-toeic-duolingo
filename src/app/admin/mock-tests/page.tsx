@@ -430,16 +430,14 @@ export default function AdminMockTestsPage() {
                       <span className="hidden sm:inline">Xem trước</span>
                     </Link>
 
-                    {isCustom ? (
-                      <Link
-                        href={`/admin/mock-tests/${test.id}/edit`}
-                        className="p-2.5 rounded-xl border border-brand-200 dark:border-brand-800 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/60 text-xs font-bold flex items-center gap-1.5"
-                        title="Chỉnh sửa câu hỏi & thông tin đề"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Sửa</span>
-                      </Link>
-                    ) : null}
+                    <Link
+                      href={`/admin/mock-tests/${test.id}/edit`}
+                      className="p-2.5 rounded-xl border border-cyan-200 dark:border-cyan-800 text-[#0891b2] dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/60 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      title="Chỉnh sửa câu hỏi & thông tin đề thi này"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Sửa</span>
+                    </Link>
 
                     <button
                       onClick={() => handleCloneTest(test)}

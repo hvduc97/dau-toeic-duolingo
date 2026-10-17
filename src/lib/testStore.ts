@@ -85,6 +85,8 @@ export function saveOrUpdateTest(test: ToeicTest): ToeicTest {
 
   const updatedTest: ToeicTest = {
     ...test,
+    series: test.series || "Khác",
+    testNumber: test.testNumber,
     isCustom: true,
     createdAt: test.createdAt || new Date().toISOString(),
     totalQuestions: test.questions.length,

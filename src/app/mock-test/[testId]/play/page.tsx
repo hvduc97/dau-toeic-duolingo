@@ -8,6 +8,7 @@ import { ToeicQuestion, ToeicPart, ToeicTest } from "@/types/toeic";
 import { calculateToeicScores } from "@/lib/toeicScoreConverter";
 import { soundManager } from "@/lib/soundEffects";
 import QuestionPaletteDrawer from "@/components/mock-test/QuestionPaletteDrawer";
+import ExamDirectionsView from "@/components/mock-test/ExamDirectionsView";
 import {
   Clock,
   Volume2,
@@ -25,7 +26,11 @@ import {
   HelpCircle,
   Headphones,
   CheckSquare,
-  Square
+  Square,
+  Eye,
+  EyeOff,
+  BookOpen,
+  ArrowRight
 } from "lucide-react";
 
 export default function ExamPlayerWrapper({ params }: { params: Promise<{ testId: string }> }) {
@@ -67,19 +72,36 @@ function ExamPlayerContent({ testId }: { testId: string }) {
   const [userAnswers, setUserAnswers] = useState<Record<number, "A" | "B" | "C" | "D">>({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Record<number, boolean>>({});
 
-  // Timer
-  const [timeLeft, setTimeLeft] = useState<number>(120 * 60); // 120 minutes countdown
-  const [timeElapsed, setTimeElapsed] = useState<number>(0); // stopwatch
+  // 100% Real Exam Section & Timer Management
+  // Listening: 45 mins (2700s) | Reading: 75 mins (4500s)
+  const [examSection, setExamSection] = useState<"listening" | "reading">(() => {
+    if (allowedParts.every((p) => p >= 5)) return "reading";
+    return "listening";
+  });
+
+  const [listeningTimeLeft, setListeningTimeLeft] = useState<number>(45 * 60); // 45 minutes
+  const [readingTimeLeft, setReadingTimeLeft] = useState<number>(75 * 60); // 75 minutes
+  const [practiceTimeElapsed, setPracticeTimeElapsed] = useState<number>(0); // stopwatch
   const [isTimerPaused, setIsTimerPaused] = useState<boolean>(false);
+
+  // Directions Screen Phase
+  const [directionsPhase, setDirectionsPhase] = useState<"intro" | 1 | 2 | 3 | 4 | "reading_intro" | null>(() => {
+    if (mode === "full") return "intro";
+    return null;
+  });
+  const [shownDirections, setShownDirections] = useState<Record<string, boolean>>({});
+
+  // Support mode toggle (mặc định tắt để ẩn chữ 100% như thi thật)
+  const [showListeningTextHelper, setShowListeningTextHelper] = useState<boolean>(false);
 
   // Audio continuous state
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [autoPlayAudio, setAutoPlayAudio] = useState<boolean>(true);
-  const [audioSpeed, setAudioSpeed] = useState<number>(1.0);
 
   // Modals & Drawers
   const [isPaletteOpen, setIsPaletteOpen] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
+  const [showSwitchToReadingModal, setShowSwitchToReadingModal] = useState<boolean>(false);
 
   // Load custom tests if needed
   useEffect(() => {
@@ -95,7 +117,6 @@ function ExamPlayerContent({ testId }: { testId: string }) {
         const data = await res.json();
         if (res.ok && data.test) {
           setTest(data.test);
-          setTimeLeft((data.test.durationMinutes || 120) * 60);
           return;
         }
       } catch {}
@@ -105,7 +126,6 @@ function ExamPlayerContent({ testId }: { testId: string }) {
         const localTest = localCustom.find((item) => item.id === testId);
         if (localTest) {
           setTest(localTest);
-          setTimeLeft((localTest.durationMinutes || 120) * 60);
         }
       } catch {}
     };
@@ -116,41 +136,74 @@ function ExamPlayerContent({ testId }: { testId: string }) {
   const currentQuestion = activeQuestions[currentQuestionIndex] || activeQuestions[0] || test.questions?.[0] || sampleToeicTests[0].questions[0];
 
   // Grouping cluster questions for Part 3, 4, 6, 7
-  // Questions that share the same passage or are in the same cluster
   const currentClusterQuestions = useMemo<ToeicQuestion[]>(() => {
     if (!currentQuestion) return [];
     if (currentQuestion.part === 1 || currentQuestion.part === 2) {
       return [currentQuestion];
     }
-    // If has passage, cluster by passage
     if (currentQuestion.passage) {
       const cluster = activeQuestions.filter(
         (q) => q.part === currentQuestion.part && q.passage === currentQuestion.passage
       );
       if (cluster.length > 0) return cluster;
     }
-    // Fallback cluster by part and proximate question numbers (e.g. 3 questions)
-    const clusterSize = currentQuestion.part === 6 ? 4 : currentQuestion.part === 7 ? 3 : 3;
+    const clusterSize = currentQuestion.part === 6 ? 4 : 3;
     const samePartQuestions = activeQuestions.filter((q) => q.part === currentQuestion.part);
     const idxInPart = samePartQuestions.findIndex((q) => q.id === currentQuestion.id);
     const startIdx = Math.floor(idxInPart / clusterSize) * clusterSize;
     return samePartQuestions.slice(startIdx, startIdx + clusterSize);
   }, [currentQuestion, activeQuestions]);
 
-  // Timer countdown / countup
+  // Section & Part change watcher to display Directions if entering a new part in Full mode
   useEffect(() => {
-    if (isTimerPaused) return;
+    if (mode !== "full" || !currentQuestion) return;
+
+    const currentPart = currentQuestion.part;
+    const partKey = `part_${currentPart}`;
+
+    // If entering part 1-4 for first time and not shown yet
+    if (currentPart <= 4 && !shownDirections[partKey] && directionsPhase === null) {
+      setDirectionsPhase(currentPart as 1 | 2 | 3 | 4);
+      setShownDirections((prev) => ({ ...prev, [partKey]: true }));
+    }
+  }, [currentQuestion?.part, mode, shownDirections, directionsPhase]);
+
+  // Timer Countdown logic: 45' Listening -> 75' Reading
+  useEffect(() => {
+    if (isTimerPaused || directionsPhase !== null) return;
 
     if (mode === "practice") {
       const interval = setInterval(() => {
-        setTimeElapsed((prev) => prev + 1);
+        setPracticeTimeElapsed((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+
+    if (examSection === "listening") {
+      if (listeningTimeLeft <= 0) {
+        // Listening time is up -> switch to Reading
+        switchToReadingSection();
+        return;
+      }
+      const interval = setInterval(() => {
+        setListeningTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            switchToReadingSection();
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
       return () => clearInterval(interval);
     } else {
-      // Full test or standard test mode
-      if (timeLeft <= 0) return;
+      // Reading section (75 mins)
+      if (readingTimeLeft <= 0) {
+        handleSubmitTest();
+        return;
+      }
       const interval = setInterval(() => {
-        setTimeLeft((prev) => {
+        setReadingTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
             handleSubmitTest();
@@ -161,7 +214,20 @@ function ExamPlayerContent({ testId }: { testId: string }) {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [isTimerPaused, timeLeft, mode]);
+  }, [isTimerPaused, directionsPhase, mode, examSection, listeningTimeLeft, readingTimeLeft]);
+
+  const switchToReadingSection = () => {
+    setExamSection("reading");
+    setDirectionsPhase("reading_intro");
+    soundManager.stopSpeaking();
+    setIsPlayingAudio(false);
+
+    // Jump to question 101 (start of Reading)
+    const q101Idx = activeQuestions.findIndex((q) => q.part >= 5);
+    if (q101Idx !== -1) {
+      setCurrentQuestionIndex(q101Idx);
+    }
+  };
 
   const formatTime = (secs: number) => {
     const h = Math.floor(secs / 3600);
@@ -177,18 +243,17 @@ function ExamPlayerContent({ testId }: { testId: string }) {
   const isAudioPlayingRef = useRef(false);
 
   const playQuestionAudio = async (q: ToeicQuestion) => {
-    if (isAudioPlayingRef.current) return;
+    if (isAudioPlayingRef.current || directionsPhase !== null) return;
     isAudioPlayingRef.current = true;
     setIsPlayingAudio(true);
 
     let textToSpeak = "";
     if (q.part === 1) {
-      textToSpeak = `Number ${q.questionNumber}. Look at the photograph. Statement A: ${q.options.A}. Statement B: ${q.options.B}. Statement C: ${q.options.C}. Statement D: ${q.options.D}.`;
+      textToSpeak = `Number ${q.questionNumber}. Look at the photograph in your test book. Statement A: ${q.options.A}. Statement B: ${q.options.B}. Statement C: ${q.options.C}. Statement D: ${q.options.D}.`;
     } else if (q.part === 2) {
       textToSpeak = `Number ${q.questionNumber}. ${q.questionText || ""}. Option A: ${q.options.A}. Option B: ${q.options.B}. Option C: ${q.options.C}.`;
     } else {
-      // Part 3 or Part 4
-      if (q.passage) textToSpeak += `Listen to the following talk. ${q.passage}. `;
+      if (q.passage) textToSpeak += `Questions refer to the following talk. ${q.passage}. `;
       textToSpeak += `Question ${q.questionNumber}. ${q.questionText || ""}.`;
     }
 
@@ -200,12 +265,18 @@ function ExamPlayerContent({ testId }: { testId: string }) {
     }
   };
 
-  // Auto-play when moving to next Listening question if enabled
+  // Auto-play when moving to next Listening question
   useEffect(() => {
-    if (autoPlayAudio && currentQuestion && currentQuestion.part <= 4 && !isTimerPaused) {
+    if (
+      autoPlayAudio &&
+      currentQuestion &&
+      currentQuestion.part <= 4 &&
+      !isTimerPaused &&
+      directionsPhase === null
+    ) {
       playQuestionAudio(currentQuestion);
     }
-  }, [currentQuestion?.id, autoPlayAudio, isTimerPaused]);
+  }, [currentQuestion?.id, autoPlayAudio, isTimerPaused, directionsPhase]);
 
   const handleSelectAnswer = (questionId: number, option: "A" | "B" | "C" | "D") => {
     setUserAnswers((prev) => ({
@@ -223,17 +294,28 @@ function ExamPlayerContent({ testId }: { testId: string }) {
     }));
   };
 
-  // Cluster-aware Navigation
+  // Navigation
   const goToNext = () => {
     soundManager.playClick();
     if (currentClusterQuestions.length > 1) {
       const lastInCluster = currentClusterQuestions[currentClusterQuestions.length - 1];
       const nextIdx = activeQuestions.findIndex((q) => q.id === lastInCluster.id) + 1;
       if (nextIdx < activeQuestions.length) {
+        // Check if crossing from Part 4 to Part 5
+        const nextQ = activeQuestions[nextIdx];
+        if (currentQuestion.part <= 4 && nextQ.part >= 5 && examSection === "listening") {
+          switchToReadingSection();
+          return;
+        }
         setCurrentQuestionIndex(nextIdx);
       }
     } else {
       if (currentQuestionIndex < activeQuestions.length - 1) {
+        const nextQ = activeQuestions[currentQuestionIndex + 1];
+        if (currentQuestion.part <= 4 && nextQ.part >= 5 && examSection === "listening") {
+          switchToReadingSection();
+          return;
+        }
         setCurrentQuestionIndex((prev) => prev + 1);
       }
     }
@@ -245,7 +327,6 @@ function ExamPlayerContent({ testId }: { testId: string }) {
       const firstInCluster = currentClusterQuestions[0];
       const prevIdx = activeQuestions.findIndex((q) => q.id === firstInCluster.id) - 1;
       if (prevIdx >= 0) {
-        // Go to start of previous cluster
         const targetQ = activeQuestions[prevIdx];
         if (targetQ.passage) {
           const prevClusterStart = activeQuestions.findIndex(
@@ -266,6 +347,10 @@ function ExamPlayerContent({ testId }: { testId: string }) {
   const jumpToQuestion = (questionId: number) => {
     const idx = activeQuestions.findIndex((q) => q.id === questionId);
     if (idx !== -1) {
+      const targetQ = activeQuestions[idx];
+      if (targetQ.part >= 5 && examSection === "listening") {
+        setExamSection("reading");
+      }
       setCurrentQuestionIndex(idx);
     }
   };
@@ -273,6 +358,7 @@ function ExamPlayerContent({ testId }: { testId: string }) {
   const answeredCount = Object.keys(userAnswers).length;
 
   const handleSubmitTest = () => {
+    soundManager.stopSpeaking();
     let listeningCorrect = 0;
     let readingCorrect = 0;
 
@@ -289,6 +375,11 @@ function ExamPlayerContent({ testId }: { testId: string }) {
 
     const scoreData = calculateToeicScores(listeningCorrect, readingCorrect);
 
+    const totalSecondsSpent =
+      mode === "practice"
+        ? practiceTimeElapsed
+        : (45 * 60 - listeningTimeLeft) + (75 * 60 - readingTimeLeft);
+
     const testSummary = {
       testId: test.id,
       testTitle: test.title,
@@ -297,7 +388,7 @@ function ExamPlayerContent({ testId }: { testId: string }) {
       readingCorrect,
       totalCorrect: listeningCorrect + readingCorrect,
       ...scoreData,
-      timeSpentSeconds: mode === "practice" ? timeElapsed : (120 * 60 - timeLeft),
+      timeSpentSeconds: totalSecondsSpent,
       answers: userAnswers,
     };
 
@@ -305,7 +396,7 @@ function ExamPlayerContent({ testId }: { testId: string }) {
     localStorage.setItem("dau_last_test_result", JSON.stringify(testSummary));
 
     const currentXp = parseInt(localStorage.getItem("dau_xp") || "50", 10);
-    localStorage.setItem("dau_xp", String(currentXp + 30));
+    localStorage.setItem("dau_xp", String(currentXp + 35));
 
     soundManager.playFanfare();
     router.push(`/mock-test/${test.id}/result`);
@@ -313,6 +404,57 @@ function ExamPlayerContent({ testId }: { testId: string }) {
 
   const isCurrentFlagged = Boolean(flaggedQuestions[currentQuestion?.id]);
   const isSplitLayout = currentQuestion && (currentQuestion.part === 3 || currentQuestion.part === 4 || currentQuestion.part === 6 || currentQuestion.part === 7);
+
+  // If currently showing a Directions Screen
+  if (directionsPhase !== null) {
+    return (
+      <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-[#070b13]">
+        {/* Simple Header */}
+        <header className="h-14 sm:h-16 bg-[#0891b2] text-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shadow-md">
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/mock-test/${test.id}/intro`}
+              className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center text-white hover:bg-white/25"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <span className="font-black text-sm sm:text-base tracking-tight truncate">
+              {test.title} — Hướng Dẫn Thi
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (directionsPhase === "intro") {
+                  setDirectionsPhase(1);
+                } else {
+                  setDirectionsPhase(null);
+                }
+              }}
+              className="h-9 px-4 rounded-xl bg-white text-[#0891b2] hover:bg-slate-50 font-black text-xs shadow-sm flex items-center gap-1.5 transition-colors"
+            >
+              <span>Vào Làm Bài Ngay</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-4">
+          <ExamDirectionsView
+            phase={directionsPhase}
+            onStart={() => {
+              if (directionsPhase === "intro") {
+                setDirectionsPhase(1);
+              } else {
+                setDirectionsPhase(null);
+              }
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-[#070b13] pb-16">
@@ -329,51 +471,76 @@ function ExamPlayerContent({ testId }: { testId: string }) {
           </Link>
 
           <div>
-            <div className="font-black text-xs sm:text-sm tracking-tight truncate max-w-[160px] sm:max-w-xs md:max-w-md">
+            <div className="font-black text-xs sm:text-sm tracking-tight truncate max-w-[150px] sm:max-w-xs md:max-w-md">
               {test.title}
             </div>
-            <div className="text-[10px] text-cyan-100 font-bold">
-              Part {currentQuestion?.part || 1} · Câu {currentQuestion?.questionNumber || 1} / 200
+            <div className="text-[10px] text-cyan-100 font-bold flex items-center gap-1.5">
+              <span>Part {currentQuestion?.part || 1}</span>
+              <span>·</span>
+              <span>Câu {currentQuestion?.questionNumber || 1}/200</span>
+              <span>·</span>
+              <span className="capitalize">{examSection === "listening" ? "Listening (45')" : "Reading (75')"}</span>
             </div>
           </div>
         </div>
 
-        {/* Center: Listening Continuous Audio Indicator */}
-        {currentQuestion?.part <= 4 && (
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-xl bg-white/15 text-white text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => {
-                if (isPlayingAudio) {
-                  soundManager.stopSpeaking();
-                  setIsPlayingAudio(false);
-                } else {
-                  playQuestionAudio(currentQuestion);
-                }
-              }}
-              className="flex items-center gap-1.5 hover:text-cyan-200 transition-colors"
-            >
-              <Volume2 className={`w-4 h-4 ${isPlayingAudio ? "animate-bounce text-amber-300" : ""}`} />
-              <span>{isPlayingAudio ? "Đang phát audio..." : "Bấm để nghe audio"}</span>
-            </button>
-            <span className="text-white/40">|</span>
-            <button
-              type="button"
-              onClick={() => setAutoPlayAudio(!autoPlayAudio)}
-              className="text-[11px] text-cyan-100 hover:text-white"
-              title="Bật/tắt tự động phát audio khi chuyển câu"
-            >
-              {autoPlayAudio ? "Tự động: BẬT" : "Tự động: TẮT"}
-            </button>
-          </div>
-        )}
+        {/* Center: Listening Controls / Switch to Reading button */}
+        <div className="hidden md:flex items-center gap-2">
+          {currentQuestion?.part <= 4 ? (
+            <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/15 text-white text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isPlayingAudio) {
+                    soundManager.stopSpeaking();
+                    setIsPlayingAudio(false);
+                  } else {
+                    playQuestionAudio(currentQuestion);
+                  }
+                }}
+                className="flex items-center gap-1.5 hover:text-cyan-200 transition-colors"
+              >
+                <Volume2 className={`w-4 h-4 ${isPlayingAudio ? "animate-bounce text-amber-300" : ""}`} />
+                <span>{isPlayingAudio ? "Audio đang phát..." : "Phát Audio"}</span>
+              </button>
 
-        {/* Right: Timer + Pause + White Submit Button */}
+              <span className="text-white/40">|</span>
+
+              {/* Toggle script helper */}
+              <button
+                type="button"
+                onClick={() => setShowListeningTextHelper(!showListeningTextHelper)}
+                className="text-[11px] text-cyan-100 hover:text-white flex items-center gap-1"
+                title="Bật/tắt văn bản trợ giúp khi nghe"
+              >
+                {showListeningTextHelper ? <Eye className="w-3.5 h-3.5 text-amber-300" /> : <EyeOff className="w-3.5 h-3.5" />}
+                <span>{showListeningTextHelper ? "Chữ: BẬT" : "Chữ: ẨN (Thi thật)"}</span>
+              </button>
+            </div>
+          ) : null}
+
+          {/* If in listening section: button to switch to reading early */}
+          {examSection === "listening" && (
+            <button
+              type="button"
+              onClick={() => setShowSwitchToReadingModal(true)}
+              className="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-black text-cyan-100 transition-colors flex items-center gap-1"
+            >
+              <span>Sang phần Đọc →</span>
+            </button>
+          )}
+        </div>
+
+        {/* Right: Section Timer + Pause + White Submit Button */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Timer box */}
           <div className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-xl bg-white/15 text-white font-mono flex items-center gap-1.5 text-xs sm:text-sm font-black">
             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-200" />
-            <span>{formatTime(mode === "practice" ? timeElapsed : timeLeft)}</span>
+            <span>
+              {mode === "practice"
+                ? formatTime(practiceTimeElapsed)
+                : formatTime(examSection === "listening" ? listeningTimeLeft : readingTimeLeft)}
+            </span>
           </div>
 
           {/* Pause button */}
@@ -386,7 +553,7 @@ function ExamPlayerContent({ testId }: { testId: string }) {
             {isTimerPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4" />}
           </button>
 
-          {/* White Submit Button (như Đậu TOEIC) */}
+          {/* White Submit Button */}
           <button
             type="button"
             onClick={() => setShowSubmitModal(true)}
@@ -414,15 +581,35 @@ function ExamPlayerContent({ testId }: { testId: string }) {
                 </span>
               </div>
 
-              {/* Passage Content */}
-              {currentQuestion.passage ? (
-                <div className="text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line font-sans select-text">
-                  {currentQuestion.passage}
+              {/* Part 3 & 4 Real Exam Notice: Hidden transcript during test unless helper turned ON */}
+              {currentQuestion.part <= 4 && !showListeningTextHelper ? (
+                <div className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-950 text-[#0891b2] flex items-center justify-center mx-auto">
+                    <Headphones className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div className="font-black text-sm text-slate-800 dark:text-slate-100">
+                    Đang Nghe Đoạn Đối Thoại / Bài Nói
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                    Theo quy chuẩn thi thật tại IIG, transcript không được in trên đề thi.
+                    Bạn hãy tập trung lắng nghe và trả lời các câu hỏi ở cột bên phải.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowListeningTextHelper(true)}
+                    className="text-xs font-bold text-[#0891b2] hover:underline inline-flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Hiện transcript trợ giúp</span>
+                  </button>
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-500 italic">
-                  Không có đoạn văn cho phần này.
-                </div>
+                /* Passage Content */
+                currentQuestion.passage && (
+                  <div className="text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line font-sans select-text">
+                    {currentQuestion.passage}
+                  </div>
+                )
               )}
 
               {/* Image if any */}
@@ -506,10 +693,10 @@ function ExamPlayerContent({ testId }: { testId: string }) {
                             }`}
                           >
                             <span
-                              className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-colors ${
+                              className={`w-7 h-7 rounded-full flex items-center justify-center font-black text-xs shrink-0 transition-colors border ${
                                 isChosen
-                                  ? "bg-[#0891b2] text-white"
-                                  : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:bg-cyan-100"
+                                  ? "bg-[#0891b2] text-white border-[#0891b2]"
+                                  : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 group-hover:border-cyan-400"
                               }`}
                             >
                               {opt}
@@ -525,7 +712,7 @@ function ExamPlayerContent({ testId }: { testId: string }) {
             </div>
           </div>
         ) : (
-          /* Single Column Layout cho Part 1 & 2 */
+          /* Single Column Layout cho Part 1 & 2 (100% Real Exam OMR Bubbles) */
           <div className="max-w-2xl mx-auto space-y-6">
             <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
               {/* Header */}
@@ -584,44 +771,66 @@ function ExamPlayerContent({ testId }: { testId: string }) {
                 </div>
               )}
 
-              {/* Question Text */}
-              {currentQuestion.questionText && (
-                <div className="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100 leading-snug">
-                  {currentQuestion.questionText}
+              {/* Question Text: If in Real Exam Mode and Part 2 -> Hidden like real test! */}
+              {currentQuestion.part === 2 ? (
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                  <div className="font-bold text-sm sm:text-base text-slate-700 dark:text-slate-200 italic">
+                    &quot;Mark your answer on your answer sheet&quot;
+                  </div>
+                  {showListeningTextHelper && currentQuestion.questionText && (
+                    <div className="pt-2 text-xs text-amber-600 dark:text-amber-400 font-semibold border-t border-slate-200 dark:border-slate-700">
+                      Script trợ giúp: {currentQuestion.questionText}
+                    </div>
+                  )}
                 </div>
-              )}
+              ) : null}
 
-              {/* Options */}
+              {/* OMR Options: If in Real Exam Mode -> Show OMR Bubbles A, B, C, (D) */}
               <div className="space-y-3 pt-2">
-                {(["A", "B", "C", "D"] as const).map((opt) => {
-                  const optText = currentQuestion.options[opt];
-                  if (!optText && opt === "D" && currentQuestion.part === 2) return null;
-                  const isChosen = userAnswers[currentQuestion.id] === opt;
+                <div className="text-xs font-bold text-slate-400 text-center uppercase tracking-wider">
+                  Chọn đáp án trắc nghiệm OMR:
+                </div>
 
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => handleSelectAnswer(currentQuestion.id, opt)}
-                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-3 group ${
-                        isChosen
-                          ? "bg-cyan-50 dark:bg-cyan-950/60 border-[#0891b2] text-cyan-950 dark:text-cyan-100 shadow-sm"
-                          : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/80 hover:border-cyan-300 text-slate-800 dark:text-slate-200"
-                      }`}
-                    >
-                      <span
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-colors ${
+                <div className={`grid gap-3 ${currentQuestion.part === 2 ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-4"}`}>
+                  {(["A", "B", "C", "D"] as const).map((opt) => {
+                    if (opt === "D" && currentQuestion.part === 2) return null;
+                    const isChosen = userAnswers[currentQuestion.id] === opt;
+                    const optText = currentQuestion.options[opt];
+
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => handleSelectAnswer(currentQuestion.id, opt)}
+                        className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 group ${
                           isChosen
-                            ? "bg-[#0891b2] text-white"
-                            : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:bg-cyan-100"
+                            ? "bg-cyan-50 dark:bg-cyan-950/70 border-[#0891b2] text-[#0891b2] shadow-md ring-2 ring-[#0891b2]"
+                            : "bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 hover:border-cyan-400 text-slate-800 dark:text-slate-200"
                         }`}
                       >
-                        {opt}
-                      </span>
-                      <span className="text-sm font-medium">{optText}</span>
-                    </button>
-                  );
-                })}
+                        <span
+                          className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-base transition-colors border-2 ${
+                            isChosen
+                              ? "bg-[#0891b2] text-white border-[#0891b2]"
+                              : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 group-hover:border-cyan-500"
+                          }`}
+                        >
+                          {opt}
+                        </span>
+
+                        {showListeningTextHelper && optText ? (
+                          <span className="text-[11px] font-medium text-center line-clamp-2">
+                            {optText}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">
+                            Đáp án {opt}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -697,7 +906,48 @@ function ExamPlayerContent({ testId }: { testId: string }) {
         onSubmitTest={() => setShowSubmitModal(true)}
       />
 
-      {/* 5. Confirmation Modal before Submit */}
+      {/* 5. Switch to Reading Section Modal */}
+      {showSwitchToReadingModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-100 text-[#0891b2] flex items-center justify-center mx-auto">
+              <BookOpen className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                Chuyển Sang Phần Đọc (Reading)?
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Bạn sẽ chuyển sang phần thi Đọc hiểu (Part 5, 6, 7 — Câu 101 đến 200).
+                Thời gian làm bài phần Đọc là <strong>75 phút</strong>. Bạn có chắc chắn muốn chuyển ngay?
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowSwitchToReadingModal(false)}
+                className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 transition-colors"
+              >
+                Tiếp tục nghe
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSwitchToReadingModal(false);
+                  switchToReadingSection();
+                }}
+                className="btn-duo flex-1 py-3 rounded-2xl bg-[#0891b2] hover:bg-cyan-600 text-white font-black text-xs shadow-duo-cyan transition-all"
+              >
+                Vào Phần Đọc (75&apos;)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Confirmation Modal before Submit */}
       {showSubmitModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5 animate-in fade-in zoom-in-95">

@@ -429,7 +429,10 @@ export function generateFull200ToeicExam(
   id: string,
   title: string,
   year: number = 2024,
-  difficulty: "Dễ" | "Trung bình" | "Khó" = "Trung bình"
+  difficulty: "Dễ" | "Trung bình" | "Khó" = "Trung bình",
+  series: "Pass TOEIC" | "Crack TOEIC Vol 1" | "Crack TOEIC Vol 2" | "ETS Series" | "Khác" = "ETS Series",
+  testNumber?: number,
+  customDescription?: string
 ): ToeicTest {
   const p1 = generatePart1Questions(); // 1 - 6
   const p2 = generatePart2Questions(); // 7 - 31
@@ -444,14 +447,16 @@ export function generateFull200ToeicExam(
   return {
     id,
     title,
-    description: `Bộ đề thi thử TOEIC chuẩn ETS 100% trọn vẹn 200 câu hỏi liên tục không ngắt quãng (1-200) gồm 100 câu Listening và 100 câu Reading với lời giải chi tiết.`,
+    description: customDescription || `Bộ đề thi thử ${series} chuẩn ETS 100% trọn vẹn 200 câu hỏi liên tục không ngắt quãng (1-200) gồm 100 câu Listening và 100 câu Reading với lời giải chi tiết.`,
     year,
     difficulty,
     totalQuestions: allQuestions.length, // 200
     durationMinutes: 120,
     questions: allQuestions,
-    isCustom: true,
+    series,
+    testNumber,
+    isCustom: false,
     createdAt: new Date().toISOString(),
-    authorName: "Hệ thống LET'S English (Chuẩn ETS/IIG)",
+    authorName: "Đậu TOEIC — LET'S English",
   };
 }

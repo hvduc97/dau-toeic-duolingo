@@ -31,6 +31,8 @@ export interface ToeicTest {
   totalQuestions: number;
   durationMinutes: number;
   questions: ToeicQuestion[];
+  series?: "Pass TOEIC" | "Crack TOEIC Vol 1" | "Crack TOEIC Vol 2" | "ETS Series" | "Khác";
+  testNumber?: number;
   isCustom?: boolean;
   createdAt?: string;
   authorName?: string;
